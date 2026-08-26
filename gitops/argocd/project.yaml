@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: fastapi-app
+  namespace: argocd
+spec:
+  description: DevOpsForge Project for fastapi-app
+  sourceRepos:
+    - "https://github.com/tejamahesh1433/devopsforge-10b-test.git"
+  destinations:
+    - namespace: fastapi-app
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
