@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fastapi-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: fastapi-app
+  source:
+    repoURL: "https://github.com/tejamahesh1433/devopsforge-10b-test.git"
+    targetRevision: "main"
+    path: "helm/fastapi-app"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: fastapi-app
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      selfHeal: true
