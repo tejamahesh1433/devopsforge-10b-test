@@ -3,7 +3,7 @@ image:
   tag: "v4"
   pullPolicy: IfNotPresent
 
-replicaCount: 2
+replicaCount: 3
 
 service:
   enabled: true
