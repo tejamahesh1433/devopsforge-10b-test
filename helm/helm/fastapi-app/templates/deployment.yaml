@@ -1,0 +1,69 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "devopsforge.serviceAccountName" . }}
+      securityContext:
+{% if security_kubernetes_run_as_non_root %}
+        runAsNonRoot: true
+{% endif %}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+{% if security_secrets_enabled %}
+          envFrom:
+            - secretRef:
+                name: {{ '{{' }} include "fullname" . {{ '}}' }}-secrets
+{% endif %}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: APP_PORT
+              value: {{ .Values.service.port | quote }}
+          {{- if .Values.health.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.health.path }}
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.health.path }}
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+          securityContext:
+{% if security_kubernetes_run_as_non_root %}
+            runAsNonRoot: true
+{% endif %}
+{% if security_kubernetes_read_only_root_filesystem %}
+            readOnlyRootFilesystem: true
+{% endif %}
+{% if not security_kubernetes_allow_privileged %}
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+{% endif %}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
